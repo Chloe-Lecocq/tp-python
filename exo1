@@ -1,0 +1,61 @@
+import cv2
+import numpy as np
+
+
+def save_webcam(outPath, fps):
+    # Capturing video from webcam:
+    cap = cv2.VideoCapture(0)
+    # Get current width of frame
+    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    # float
+    # Get current height of frame
+    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    # float
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*"XVID")
+    out = cv2.VideoWriter(outPath, fourcc, fps, (int(width), int(height)))
+
+    success, first_frame = cap.read()
+    first_frame = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
+    alarm = 'off'
+
+    while cap.isOpened():
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+
+        if ret:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            frame_delta = cv2.absdiff(first_frame, gray)
+            thresh = cv2.threshold(frame_delta, 25, 255, cv2.THRESH_BINARY)[1]
+            cv2.imshow('thresh', thresh)
+
+            n_white_pix = np.sum(thresh == 255)
+            if n_white_pix > 20000:
+                # Saves for video
+                out.write(frame)
+                if alarm == 'off':
+                    print('alarm')
+                    alarm = 'on'
+                else:
+                    alarm = 'off'
+
+        else:
+            break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            # if 'q' is pressed then quit
+            break
+
+    # When everything done, release the capture
+    cap.release()
+    out.release()
+
+    cv2.destroyAllWindows()
+
+
+def main():
+    save_webcam('output.avi', 30.0)
+
+
+if __name__ == '__main__':
+    main()
